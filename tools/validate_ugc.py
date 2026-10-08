@@ -65,9 +65,42 @@ def shells_of(F, nv):
     return list(groups.values())
 
 
+def uv_overlap(VT, F, FT, shells, res=512):
+    """Texels claimed by two different shells (islands must not overlap)."""
+    owner = np.full((res, res), -1, np.int32)
+    clash = 0
+    for sid, face_ids in enumerate(shells):
+        for fi in face_ids:
+            ft = FT[fi]
+            for i in range(1, len(ft) - 1):
+                uv = VT[[ft[0], ft[i], ft[i + 1]]] * res - 0.5
+                x0, y0 = np.floor(uv.min(0)).astype(int)
+                x1, y1 = np.ceil(uv.max(0)).astype(int)
+                x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, res - 1), min(y1, res - 1)
+                if x1 < x0 or y1 < y0:
+                    continue
+                gx, gy = np.meshgrid(np.arange(x0, x1 + 1), np.arange(y0, y1 + 1))
+                (ax, ay), (bx, by), (cx, cy) = uv
+                den = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
+                if abs(den) < 1e-12:
+                    continue
+                w0 = ((by - cy) * (gx - cx) + (cx - bx) * (gy - cy)) / den
+                w1 = ((cy - ay) * (gx - cx) + (ax - cx) * (gy - cy)) / den
+                inside = (w0 > 1e-6) & (w1 > 1e-6) & (1 - w0 - w1 > 1e-6)
+                gx, gy = gx[inside], gy[inside]
+                prev = owner[gy, gx]
+                clash += int(((prev >= 0) & (prev != sid)).sum())
+                owner[gy, gx] = np.where(prev >= 0, prev, sid)
+    return clash
+
+
 def validate(slug):
     out = os.path.normpath(os.path.join(HERE, "..", "ugc", slug))
-    with open(os.path.join(out, "build", "specs.json")) as fh:
+    spec_path = os.path.join(out, "build", "specs.json")
+    if not os.path.exists(spec_path):
+        print(f"== {slug}\nFAIL  build/specs.json missing: run tools/build_ugc.py first\n")
+        return 1
+    with open(spec_path) as fh:
         specs = json.load(fh)
     name, asset_type = specs["name"], specs["asset_type"]
     V, VT, F, FT, mats = load_obj(os.path.join(out, "obj", f"{name}.obj"))
@@ -113,6 +146,8 @@ def validate(slug):
 
     check("UVs inside 0..1", VT.min() >= 0 and VT.max() <= 1,
           f"[{VT.min():.3f}, {VT.max():.3f}]")
+    clash = uv_overlap(VT, F, FT, shells)
+    check("UV islands do not overlap", clash == 0, f"{clash} shared texels at 512 px")
 
     check("Attachment matches asset type",
           specs["attachment"] in ATTACHMENTS[asset_type][1],

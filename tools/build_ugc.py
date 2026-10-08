@@ -59,7 +59,8 @@ def main():
         cws = {k: item.COLORWAYS[k] for k in names}
         print(f"[{name}] baking textures ({', '.join(names)}) ...")
         albedos, _ = bake_albedos(shells, cws, item.paint, size=args.size,
-                                  ao_radius=getattr(item, "AO_RADIUS", 0.17))
+                                  ao_radius=getattr(item, "AO_RADIUS", 0.17),
+                                  ao_strength=getattr(item, "AO_STRENGTH", 0.75))
         for k, img in albedos.items():
             img.save(os.path.join(out, "textures", f"{name}_{k}_Albedo.png"), optimize=True)
 

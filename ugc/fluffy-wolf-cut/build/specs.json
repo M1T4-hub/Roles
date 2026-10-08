@@ -1,0 +1,87 @@
+{
+  "name": "FluffyWolfCut",
+  "slug": "fluffy-wolf-cut",
+  "module": "cheveux_wolf_cut",
+  "asset_type": "Hair",
+  "accessory_type": "Hair",
+  "attachment": "HairAttachment",
+  "aft_body_scale": "Classic",
+  "triangles": 3960,
+  "vertices": 2046,
+  "shells": [
+    "Scalp",
+    "Top0",
+    "Top1",
+    "Top2",
+    "Top3",
+    "Top4",
+    "Top5",
+    "Top6",
+    "Top7",
+    "Mid0",
+    "Mid1",
+    "Mid2",
+    "Under0",
+    "Under1",
+    "Under2",
+    "Under3",
+    "Under4",
+    "Under5",
+    "Under6",
+    "Nape0",
+    "Nape1",
+    "Mullet0",
+    "Mullet1",
+    "Mullet2",
+    "Mullet3",
+    "BangL0",
+    "BangL1",
+    "BangL2",
+    "WispL",
+    "BangR0",
+    "BangR1",
+    "BangR2",
+    "WispR"
+  ],
+  "bbox_min": [
+    -0.8791,
+    -1.5223,
+    -0.6976
+  ],
+  "bbox_max": [
+    0.8356,
+    0.2579,
+    0.8663
+  ],
+  "bbox_size": [
+    1.7147,
+    1.7803,
+    1.5639
+  ],
+  "fits": {
+    "Normal": true,
+    "Slender": true,
+    "Classic": true
+  },
+  "colourways": [
+    "Noir",
+    "Chatain",
+    "Platine",
+    "Rose",
+    "Duo"
+  ],
+  "preview": {
+    "front": {
+      "cam": "1.9,0.25,-3.2",
+      "target": "0,-0.62,0"
+    },
+    "dos": {
+      "cam": "-1.8,1.0,3.0",
+      "target": "0,-0.7,0"
+    },
+    "profil": {
+      "cam": "-3.6,0.15,-0.3",
+      "target": "0,-0.65,0"
+    }
+  }
+}

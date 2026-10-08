@@ -150,7 +150,7 @@ def main():
 
     with open(os.path.join(OUT, "build", "blender_report.json"), "w") as fh:
         json.dump(report, fh, indent=2)
-    print(json.dumps(report["Fraise"]["source"], indent=2))
+    print(json.dumps(report[COLOURS[0]]["source"], indent=2))
 
 
 if __name__ == "__main__":

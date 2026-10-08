@@ -1,0 +1,80 @@
+{
+  "name": "FroggyShoulderPal",
+  "slug": "froggy-shoulder-pal",
+  "module": "grenouille_epaule",
+  "asset_type": "ShoulderCollar",
+  "accessory_type": "Shoulder",
+  "attachment": "RightCollarAttachment",
+  "aft_body_scale": "Classic",
+  "triangles": 3914,
+  "vertices": 1997,
+  "shells": [
+    "Body",
+    "EyeL",
+    "EyeR",
+    "StrawberryHat",
+    "Calyx",
+    "Stem",
+    "HaunchL",
+    "HaunchR",
+    "ToeFL0",
+    "ToeFL1",
+    "ToeFL2",
+    "ToeFR0",
+    "ToeFR1",
+    "ToeFR2",
+    "ToeBL0",
+    "ToeBL1",
+    "ToeBL2",
+    "ToeBR0",
+    "ToeBR1",
+    "ToeBR2"
+  ],
+  "bbox_min": [
+    0.0775,
+    -0.0076,
+    -0.2924
+  ],
+  "bbox_max": [
+    0.796,
+    0.5314,
+    0.2671
+  ],
+  "bbox_size": [
+    0.7186,
+    0.539,
+    0.5595
+  ],
+  "fits": {
+    "Normal": true,
+    "Slender": true,
+    "Classic": true
+  },
+  "colourways": [
+    "Vert",
+    "Fraise",
+    "Bleu",
+    "Citron",
+    "Choco"
+  ],
+  "preview": {
+    "face": {
+      "cam": "1.3,1.0,-2.3",
+      "target": "0.15,0.4,0",
+      "fov": 34
+    },
+    "profil": {
+      "cam": "3.0,0.75,-1.3",
+      "target": "0.45,0.22,0"
+    },
+    "dessus": {
+      "cam": "1.4,2.5,1.8",
+      "target": "0.4,0.18,0"
+    },
+    "buste": {
+      "cam": "1.5,1.1,-2.6",
+      "target": "-0.15,0.45,0",
+      "fov": 38
+    }
+  }
+}

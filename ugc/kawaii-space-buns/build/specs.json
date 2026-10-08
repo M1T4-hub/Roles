@@ -1,0 +1,76 @@
+{
+  "name": "KawaiiSpaceBuns",
+  "slug": "kawaii-space-buns",
+  "module": "cheveux_chignons",
+  "asset_type": "Hair",
+  "accessory_type": "Hair",
+  "attachment": "HairAttachment",
+  "aft_body_scale": "Classic",
+  "triangles": 3928,
+  "vertices": 2004,
+  "shells": [
+    "Scalp",
+    "BunL",
+    "BunR",
+    "ScrunchieL",
+    "ScrunchieR",
+    "Bang0",
+    "Bang1",
+    "Bang2",
+    "Bang3",
+    "Bang4",
+    "Bang5",
+    "Bang6",
+    "StrandL",
+    "StrandR",
+    "Back0",
+    "Back1",
+    "Back2",
+    "Back3",
+    "Back4",
+    "Back5",
+    "Temple0",
+    "Temple1"
+  ],
+  "bbox_min": [
+    -0.8581,
+    -1.138,
+    -0.7045
+  ],
+  "bbox_max": [
+    0.8581,
+    0.3706,
+    0.7181
+  ],
+  "bbox_size": [
+    1.7162,
+    1.5086,
+    1.4226
+  ],
+  "fits": {
+    "Normal": true,
+    "Slender": true,
+    "Classic": true
+  },
+  "colourways": [
+    "Noir",
+    "Chatain",
+    "Blond",
+    "Rose",
+    "Lilas"
+  ],
+  "preview": {
+    "front": {
+      "cam": "1.7,0.45,-2.95",
+      "target": "0,-0.36,0"
+    },
+    "dos": {
+      "cam": "-1.75,1.35,2.6",
+      "target": "0,-0.4,0"
+    },
+    "profil": {
+      "cam": "-3.35,0.25,-0.35",
+      "target": "0,-0.4,0"
+    }
+  }
+}

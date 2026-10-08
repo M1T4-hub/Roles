@@ -1,0 +1,157 @@
+{
+  "Noir": {
+    "source": {
+      "triangles": 3928,
+      "vertices": 2004,
+      "faces": 2156,
+      "non_manifold_edges": 0,
+      "boundary_edges": 0,
+      "degenerate_faces": 0,
+      "ngons": 0,
+      "shells": 22,
+      "inward_shells": 0,
+      "uv_layers": 1,
+      "materials": 1,
+      "bbox_min": [
+        -0.8580979704856873,
+        -1.1380000114440918,
+        -0.7044990062713623
+      ],
+      "bbox_max": [
+        0.8580979704856873,
+        0.37057700753211975,
+        0.7180579900741577
+      ]
+    },
+    "roundtrip_triangles": 3928,
+    "roundtrip_bbox_error_studs": 0.0,
+    "embedded_texture": [
+      "KawaiiSpaceBuns_Noir_Albedo.png 1024x1024"
+    ],
+    "fbx_bytes": 489244
+  },
+  "Chatain": {
+    "source": {
+      "triangles": 3928,
+      "vertices": 2004,
+      "faces": 2156,
+      "non_manifold_edges": 0,
+      "boundary_edges": 0,
+      "degenerate_faces": 0,
+      "ngons": 0,
+      "shells": 22,
+      "inward_shells": 0,
+      "uv_layers": 1,
+      "materials": 1,
+      "bbox_min": [
+        -0.8580979704856873,
+        -1.1380000114440918,
+        -0.7044990062713623
+      ],
+      "bbox_max": [
+        0.8580979704856873,
+        0.37057700753211975,
+        0.7180579900741577
+      ]
+    },
+    "roundtrip_triangles": 3928,
+    "roundtrip_bbox_error_studs": 0.0,
+    "embedded_texture": [
+      "KawaiiSpaceBuns_Chatain_Albedo.png 1024x1024"
+    ],
+    "fbx_bytes": 542684
+  },
+  "Blond": {
+    "source": {
+      "triangles": 3928,
+      "vertices": 2004,
+      "faces": 2156,
+      "non_manifold_edges": 0,
+      "boundary_edges": 0,
+      "degenerate_faces": 0,
+      "ngons": 0,
+      "shells": 22,
+      "inward_shells": 0,
+      "uv_layers": 1,
+      "materials": 1,
+      "bbox_min": [
+        -0.8580979704856873,
+        -1.1380000114440918,
+        -0.7044990062713623
+      ],
+      "bbox_max": [
+        0.8580979704856873,
+        0.37057700753211975,
+        0.7180579900741577
+      ]
+    },
+    "roundtrip_triangles": 3928,
+    "roundtrip_bbox_error_studs": 0.0,
+    "embedded_texture": [
+      "KawaiiSpaceBuns_Blond_Albedo.png 1024x1024"
+    ],
+    "fbx_bytes": 595372
+  },
+  "Rose": {
+    "source": {
+      "triangles": 3928,
+      "vertices": 2004,
+      "faces": 2156,
+      "non_manifold_edges": 0,
+      "boundary_edges": 0,
+      "degenerate_faces": 0,
+      "ngons": 0,
+      "shells": 22,
+      "inward_shells": 0,
+      "uv_layers": 1,
+      "materials": 1,
+      "bbox_min": [
+        -0.8580979704856873,
+        -1.1380000114440918,
+        -0.7044990062713623
+      ],
+      "bbox_max": [
+        0.8580979704856873,
+        0.37057700753211975,
+        0.7180579900741577
+      ]
+    },
+    "roundtrip_triangles": 3928,
+    "roundtrip_bbox_error_studs": 0.0,
+    "embedded_texture": [
+      "KawaiiSpaceBuns_Rose_Albedo.png 1024x1024"
+    ],
+    "fbx_bytes": 595836
+  },
+  "Lilas": {
+    "source": {
+      "triangles": 3928,
+      "vertices": 2004,
+      "faces": 2156,
+      "non_manifold_edges": 0,
+      "boundary_edges": 0,
+      "degenerate_faces": 0,
+      "ngons": 0,
+      "shells": 22,
+      "inward_shells": 0,
+      "uv_layers": 1,
+      "materials": 1,
+      "bbox_min": [
+        -0.8580979704856873,
+        -1.1380000114440918,
+        -0.7044990062713623
+      ],
+      "bbox_max": [
+        0.8580979704856873,
+        0.37057700753211975,
+        0.7180579900741577
+      ]
+    },
+    "roundtrip_triangles": 3928,
+    "roundtrip_bbox_error_studs": 0.0,
+    "embedded_texture": [
+      "KawaiiSpaceBuns_Lilas_Albedo.png 1024x1024"
+    ],
+    "fbx_bytes": 606044
+  }
+}

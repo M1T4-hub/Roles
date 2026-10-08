@@ -24,6 +24,7 @@ ASSET_TYPE = "Hat"              # key of ugclib.specs.LIMITS: Hat, Hair, Face, N
 ATTACHMENT = "HatAttachment"    # must be one of ugclib.specs.ATTACHMENTS[ASSET_TYPE][1]
 AFT_BODY_SCALE = "Classic"      # body type to pick in the Accessory Fitting Tool
 AO_RADIUS = 0.17                # studs; ~0.17 for head items, 0.3-0.4 for big items
+AO_STRENGTH = 0.75              # optional, 0..1: how dark baked occlusion gets
 PREVIEW = {                     # cameras RELATIVE to the attachment point
     "front": dict(cam="1.95,0.8,-2.95", target="0,-0.08,0"),
     "dos": dict(cam="-1.6,1.3,2.7", target="0,-0.08,0"),
@@ -48,7 +49,7 @@ def paint(ctx, C) -> (colour, shade): ...  # see ugclib/bake.py docstring
 - **Roblox rules** (checked by `validate_ugc.py`): ≤ 4000 triangles, one mesh,
   one material, every shell closed and outward (use the `ugclib.geometry`
   primitives: they are watertight by construction), quads/tris only, UVs in
-  0..1, size inside the asset type's box (`ugclib/specs.py`) for Classic and
+  0..1, UV islands of different shells never overlap, size inside the asset type's box (`ugclib/specs.py`) for Classic and
   for `AFT_BODY_SCALE`.
 - **UV islands**: give every shell its own `island=(u0, v0, u1, v1)` rectangle;
   islands must not overlap and should keep ~0.006 gaps. Make island area
