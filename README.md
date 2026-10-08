@@ -1,138 +1,70 @@
-# 🐱🎀 Neko Bucket Hat : UGC Roblox (Hat)
+# 🛍️ Collection UGC Roblox « Kawaii »
 
-Un **bob à oreilles de chat** avec un **nœud coquette** et sa perle, une petite **patte** imprimée devant, en **plastique simple** (aplats de couleur propres, sans fourrure ni bruit). Il existe en **5 coloris**.
+Des accessoires Roblox prêts à importer dans Studio et à publier, dans un style **plastique simple** (aplats de couleur propres, sans fourrure ni bruit), avec **5 coloris** chacun. Chaque coloris est un fichier `.fbx` avec sa texture intégrée.
 
-![Les 5 coloris](ugc/neko-bucket-hat/previews/coloris.png)
+Ces objets suivent des tendances : les cheveux sont la catégorie qui se vend le plus, les accessoires de visage se vendent le plus vite, et les ailes, le dos, les oreilles d'animaux, les nœuds « coquette » et le pastel progressent. Proposer plusieurs coloris aide aussi les ventes.
 
-| Fraise | Matcha | Minuit | Nuage | Choco |
+<!-- collection:start -->
+| | Objet | Type | Coloris | Triangles |
 |---|---|---|---|---|
-| rose + nœud crème | vert sauge + crème | anthracite + lilas | blanc + bleu ciel | marron + crème |
+| <img src="ugc/neko-bucket-hat/previews/NekoBucketHat_Fraise.png" width="120"> | **[Bob Oreilles de Chat Kawaii + Nœud](ugc/neko-bucket-hat/LISEZMOI.md)**<br>Kawaii Cat Ear Bucket Hat w/ Bow | Hat (chapeau) | Fraise, Matcha, Minuit, Nuage, Choco | 3820 |
+| <img src="ugc/froggy-shoulder-pal/previews/FroggyShoulderPal_Vert.png" width="120"> | **[Grenouille d'épaule au chapeau fraise](ugc/froggy-shoulder-pal/LISEZMOI.md)**<br>Froggy Shoulder Pal w/ Strawberry Hat | Shoulder (épaule) | Vert, Rose, Bleu, Citron, Choco | 3914 |
+<!-- collection:end -->
 
-Tendances visées : oreilles d'animaux, nœuds « coquette », couleurs pastel, formes généreuses et déclinaisons de couleurs (les items vendus en plusieurs couleurs se vendent mieux).
-
----
-
-## 📦 Ce qu'il faut importer
-
-```
-ugc/neko-bucket-hat/
-├── fbx/                      ← À IMPORTER DANS STUDIO (1 fichier = 1 couleur, texture incluse)
-│   ├── NekoBucketHat_Fraise.fbx
-│   ├── NekoBucketHat_Matcha.fbx
-│   ├── NekoBucketHat_Minuit.fbx
-│   ├── NekoBucketHat_Nuage.fbx
-│   └── NekoBucketHat_Choco.fbx
-├── textures/                 ← les PNG 1024×1024 (au cas où, voir dépannage)
-├── obj/                      ← même maillage en .obj (secours)
-└── previews/                 ← images de présentation
-```
-
-Chaque `.fbx` contient **le maillage + la texture intégrée**. Ils ont été exportés avec Blender 5.2 en suivant les réglages préconisés par la doc Roblox (*Path Mode = Copy*, *Embed Textures*, *Apply Scalings = FBX Unit Scale*, avant = Z, haut = Y), donc 1 unité = 1 stud et l'avant du chapeau regarde l'avant de l'avatar.
+Clique sur le nom d'un objet pour ouvrir sa notice (`LISEZMOI.md`). Elle donne les fichiers, les réglages exacts de Studio, le placement attendu sur le mannequin, la fiche Marketplace et le tableau de conformité.
 
 ---
 
-## 🚀 De Studio à la Marketplace en 6 étapes
+## 🚀 De Studio à la Marketplace (valable pour tous les objets)
 
-### 1. Importer
-1. Ouvre Roblox Studio (n'importe quel place, une Baseplate suffit).
-2. **File › Import 3D** (ou bouton **Import 3D** de l'onglet Home), puis choisis par exemple `fbx/NekoBucketHat_Fraise.fbx`.
-3. Dans la fenêtre d'aperçu, **ne change rien**. Les valeurs par défaut sont les bonnes :
-   - *Scale Unit* : **Studs**
-   - *World Forward* : **Front**, *World Up* : **Top**
-   - *Upload to Roblox* : coché
-   - Taille affichée : environ **1,74 × 0,99 × 1,74** studs, **3 820 triangles**
-4. Clique **Import**. Un `Model` apparaît dans le Workspace avec le MeshPart `NekoBucketHat` déjà texturé.
+1. **Importer** : dans Roblox Studio, ouvre **Import 3D** (menu *File* ou onglet *Home*) et choisis le `.fbx` de la couleur voulue (`ugc/<objet>/fbx/`). **Ne change aucun réglage** : *Scale Unit* = Studs, *World Forward* = Front, *World Up* = Top, *Upload to Roblox* coché. Clique sur **Import**. L'objet apparaît déjà texturé.
+2. **Transformer en accessoire** : ouvre l'onglet **Avatar › Accessory** (Accessory Fitting Tool). Sélectionne le MeshPart importé, puis choisis **Accessory ›** le type indiqué dans la notice (Hat, Hair, Face, Back, Shoulder…) et le *body type* **Classic**. Place l'objet comme sur l'aperçu, puis clique sur **Generate MeshPart Accessory**.
+3. **Vérifier** : sélectionne l'`Accessory`, ouvre **View › Command Bar** et colle tout [`ugc/VerifierUGC.lua`](ugc/VerifierUGC.lua). Il reconnaît le type d'accessoire, corrige ce que Roblox impose (matériau Plastic, transparence 0) et contrôle la taille. Il doit afficher **🎉 Prêt**.
+4. **Uploader** : fais un clic droit sur l'`Accessory` › **Save to Roblox** › *Avatar Asset* › le type d'accessoire. Remplis le titre et la description (fiche Marketplace de la notice), puis clique sur **Submit**.
+5. **Modération**, puis **mise en vente** dans le [Creator Hub › Creations](https://create.roblox.com/dashboard/creations) (prix, Limited ou non, **Publish**).
 
-### 2. Transformer en accessoire (Accessory Fitting Tool)
-1. Onglet **Avatar › Accessory**.
-2. **Part** : sélectionne le MeshPart `NekoBucketHat` dans l'Explorer, puis **Next**.
-3. **Asset Type** : **Accessory › Hat**. Pour le type de corps (*body type*), prends **Classic** : le chapeau est calibré sur la tête R15 classique de 1,2 stud et rentre aussi dans les limites Normal et Slender. Puis **Next**.
-4. Vérifie sur le mannequin que **la patte est devant** et que **le nœud est sur le côté avant droit**. Ajuste au besoin avec Move/Scale.
-5. **Generate MeshPart Accessory**. Un `Accessory` est créé.
-
-### 3. Vérifier (10 secondes)
-1. Sélectionne l'`Accessory` dans l'Explorer.
-2. **View › Command Bar**, colle tout le contenu de [`ugc/VerifierUGC.lua`](ugc/VerifierUGC.lua) (valable pour tous les accessoires) puis appuie sur Entrée.
-3. Dans **Output**, tu dois lire `🎉 Prêt`. Le script corrige tout seul ce que Roblox exige (type Hat, matériau Plastic, transparence 0) et signale le reste.
-
-### 4. Uploader
-Clic droit sur l'`Accessory` › **Save to Roblox** › *Submit As* : **Avatar Asset** › *Asset type* : **Hat**. La validation Roblox se lance. Remplis titre et description (voir la fiche ci-dessous), puis **Submit**.
-
-### 5. Modération
-L'item part en modération. Tu le retrouves dans le [Creator Hub › Creations](https://create.roblox.com/dashboard/creations).
-
-### 6. Mettre en vente
-Dans **Manage Item** : prix, Limited ou non, puis **Publish**. Recommence les étapes 1 à 4 avec les autres `.fbx` pour sortir toute la gamme de couleurs.
-
-> ⚠️ **Prérequis compte** : pour vendre sur la Marketplace, ton compte doit remplir les [conditions créateur de Roblox](https://create.roblox.com/docs/marketplace/marketplace-policy#creator-and-group-requirements), et des [frais d'upload et de publication](https://create.roblox.com/docs/marketplace/marketplace-fees-and-commissions) s'appliquent. Si tu ne vois pas le menu *Asset type* à l'étape 4, ton compte n'y a pas encore accès.
+> ⚠️ **Prérequis compte** : pour vendre sur la Marketplace, ton compte doit remplir les [conditions créateur de Roblox](https://create.roblox.com/docs/marketplace/marketplace-policy#creator-and-group-requirements), et des [frais d'upload et de publication](https://create.roblox.com/docs/marketplace/marketplace-fees-and-commissions) s'appliquent. Si le menu *Asset type* n'apparaît pas à l'étape 4, ton compte n'y a pas encore accès.
 
 ---
 
-## 🏷️ Fiche Marketplace (à copier-coller)
+## ✅ Ce qui est vérifié pour chaque objet
 
-**Titre (EN, recommandé pour la visibilité)**
-```
-Kawaii Cat Ear Bucket Hat w/ Bow - Pink
-```
-(remplace `Pink` par `Matcha`, `Midnight`, `Cloud` ou `Cocoa` selon la couleur)
+`tools/validate_ugc.py` contrôle chaque objet selon les [spécifications des accessoires rigides Roblox](https://create.roblox.com/docs/avatar/rigid-accessories/specifications). Chaque FBX est aussi réimporté dans Blender pour s'assurer qu'il est identique au modèle :
 
-**Description (EN)**
-```
-A cute bucket hat with cat ears, a coquette bow with a pearl and a little paw print. Clean, simple plastic style. Available in 5 colors: Pink, Matcha, Midnight, Cloud and Cocoa!
-```
+- ≤ 4 000 triangles, un seul maillage et un seul matériau, uniquement des triangles et des quads ;
+- volumes fermés (étanches), normales vers l'extérieur, aucune face dégénérée ;
+- UV dans 0–1, sans chevauchement entre les pièces ;
+- taille dans la boîte autorisée pour le type d'accessoire (Classic et Normal, et Slender quand c'est possible) ;
+- une texture PNG de 1024 × 1024 par coloris, intégrée dans un FBX binaire.
 
-**Titre (FR)**
-```
-Bob Oreilles de Chat Kawaii + Nœud - Rose
-```
+Les FBX sont exportés avec Blender 5.2 selon les réglages de la doc Roblox (*Path Mode = Copy*, *Embed Textures*, *Apply Scalings = FBX Unit Scale*, avant = Z, haut = Y) : 1 unité = 1 stud, et l'avant de l'objet regarde l'avant de l'avatar.
 
-**Description (FR)**
-```
-Un bob trop mignon avec oreilles de chat, nœud coquette à perle et petite patte. Style plastique simple et propre. Existe en 5 couleurs : Rose, Matcha, Minuit, Nuage et Choco !
-```
-
----
-
-## ✅ Conformité vérifiée
-
-Mesuré automatiquement par `tools/validate_ugc.py` et par un aller-retour d'import dans Blender (`tools/blender_export.py`), selon les [spécifications des accessoires rigides Roblox](https://create.roblox.com/docs/avatar/rigid-accessories/specifications) :
-
-| Règle Roblox | Limite | Neko Bucket Hat |
-|---|---|---|
-| Triangles | ≤ 4 000 | **3 820** |
-| Maillage unique | 1 mesh, 1 matériau | ✅ 1 mesh, 1 matériau |
-| Étanche (watertight), sans faces arrière | aucun trou | ✅ 0 arête ouverte, 9 volumes fermés, normales vers l'extérieur |
-| Faces | quads/triangles, pas de n-gones | ✅ max 4 côtés, 0 face dégénérée |
-| Boîte Hat Classic | 3 × 4 × 3 | ✅ 1,74 × 1,06 × 1,74 |
-| Boîte Hat Normal | 1,87 × 2,5 × 1,87 | ✅ 1,74 × 1,06 × 1,74 |
-| Boîte Hat Slender | 1,78 × 2,5 × 1,78 | ✅ 1,74 × 1,06 × 1,74 |
-| UV | 1 seul jeu, dans 0–1 | ✅ |
-| Texture | ≤ 1024 (UV) / ≤ 2048 (Marketplace) | ✅ 1024 × 1024 PNG |
-| Matériau / transparence | Plastic / 0 | ✅ (forcé par `VerifierUGC.lua`) |
-
-Origine du maillage = point `HatAttachment` (sommet d'une tête R15 de 1,2 stud), axes Roblox (Y en haut, avant = −Z).
+Ce qui reste invérifiable d'ici : je n'ai pas Roblox Studio, donc l'import réel et la validation finale de Roblox au moment de l'upload n'ont pas été testés.
 
 ---
 
 ## 🛠️ Dépannage
 
-- **La texture n'apparaît pas après l'import** : dans l'**Asset Manager**, importe le PNG de `textures/` correspondant à ta couleur, puis colle son ID dans `Handle › TextureID`.
-- **La patte ou le nœud se retrouvent derrière la tête** : dans l'Accessory Fitting Tool, tourne le chapeau de 180° autour de l'axe vertical avant *Generate*. En principe ça n'arrive pas (le FBX suit la convention de la doc Roblox), mais je n'ai pas pu le tester dans Studio.
-- **Trop grand ou trop petit sur ton avatar** : ajuste l'échelle dans l'Accessory Fitting Tool. Le script de vérification te dira si tu dépasses la boîte autorisée.
-- **Plan B** : `obj/NekoBucketHat.obj` contient le même maillage. Importe-le, puis applique la texture comme ci-dessus.
+- **La texture n'apparaît pas après l'import** : importe le PNG `textures/<Nom>_<Couleur>_Albedo.png` de l'objet dans l'**Asset Manager**, puis colle son ID dans `Handle › TextureID`.
+- **L'objet arrive au mauvais endroit dans l'Accessory Fitting Tool** : chaque notice donne le placement attendu et le décalage exact à appliquer si l'outil le centre sur le point d'attache.
+- **L'objet regarde vers l'arrière** : tourne-le de 180° autour de l'axe vertical dans l'Accessory Fitting Tool avant *Generate*. En principe ça n'arrive pas.
+- **Trop grand ou trop petit sur ton avatar** : ajuste l'échelle dans l'Accessory Fitting Tool. `VerifierUGC.lua` te dit si tu dépasses la boîte autorisée.
+- **Plan B** : `obj/<Nom>.obj` contient le même maillage. Importe-le, puis applique la texture comme ci-dessus.
 
 ---
 
-## 🔁 Modifier ou régénérer un objet
+## 🔁 Modifier ou créer un objet
 
-Tout est procédural. Chaque objet est un module dans `tools/items/` (formes, couleurs dans `COLORWAYS`, zones de couleur dans `paint`). Le contrat est décrit dans [`tools/items/README.md`](tools/items/README.md).
+Tout est procédural. Chaque objet est un module Python dans `tools/items/` : formes (`build_shells`), couleurs (`COLORWAYS`), zones de couleur (`paint`) et fiche (`LISTING`). Le contrat est décrit dans [`tools/items/README.md`](tools/items/README.md).
 
 ```bash
 pip install -r tools/requirements.txt
-python3 tools/build_ugc.py neko_bucket_hat          # maillage .obj + textures
-python3 -m pip install bpy                           # Blender en module Python (≈ 400 Mo)
+python3 -m pip install bpy                           # Blender en module Python (≈ 400 Mo), pour les FBX
+(cd tools/render && npm install)                     # pour les aperçus
+
+python3 tools/build_ugc.py neko_bucket_hat           # maillage .obj + textures
 python3 tools/blender_export.py neko-bucket-hat      # FBX prêts pour Studio + contrôle aller-retour
 python3 tools/validate_ugc.py --all                  # règles UGC Roblox
-cd tools/render && npm install && cd ../..
 python3 tools/render_previews.py neko-bucket-hat     # aperçus
+python3 tools/write_guides.py                        # notices LISEZMOI.md + tableau ci-dessus
 ```

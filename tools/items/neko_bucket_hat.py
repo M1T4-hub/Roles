@@ -30,6 +30,22 @@ PREVIEW = {
     "profil": dict(cam="-3.4,0.35,-0.6", target="0,-0.08,0"),
 }
 
+# Marketplace texts and import notes (used by tools/write_guides.py).
+LISTING = dict(
+    title_fr="Bob Oreilles de Chat Kawaii + Nœud",
+    title_en="Kawaii Cat Ear Bucket Hat w/ Bow",
+    description_fr=("Un bob trop mignon avec oreilles de chat, nœud coquette à perle et petite "
+                    "patte. Style plastique simple et propre. Existe en 5 couleurs : Rose, "
+                    "Matcha, Minuit, Nuage et Choco !"),
+    description_en=("A cute bucket hat with cat ears, a coquette bow with a pearl and a little "
+                    "paw print. Clean, simple plastic style. Available in 5 colors: Pink, "
+                    "Matcha, Midnight, Cloud and Cocoa!"),
+    colour_en={"Fraise": "Pink", "Matcha": "Matcha", "Minuit": "Midnight", "Nuage": "Cloud",
+               "Choco": "Cocoa"},
+    placement_fr=("Le bob se pose bien droit sur la tête, le bord juste au-dessus des yeux ; "
+                  "la patte est devant et le nœud sur le côté avant droit."),
+)
+
 # Part ids, used by paint().
 PART_CROWN = 0
 PART_EAR_L = 1

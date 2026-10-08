@@ -10,6 +10,7 @@ python3 tools/render_previews.py <slug> --quick --out /tmp/x   # one quick rende
 <python-with-bpy> tools/blender_export.py <slug>    # one FBX per colourway (+ round-trip check)
 python3 tools/validate_ugc.py <slug>                # Roblox rules, must print all PASS
 python3 tools/render_previews.py <slug>             # final previews in ugc/<slug>/previews/
+python3 tools/write_guides.py                       # ugc/<slug>/LISEZMOI.md + root README table
 ```
 
 `<python-with-bpy>` is any Python with Blender's `bpy` module (`pip install bpy`).
@@ -30,6 +31,14 @@ PREVIEW = {                     # cameras RELATIVE to the attachment point
     "dos": dict(cam="-1.6,1.3,2.7", target="0,-0.08,0"),
 }
 COLORWAYS = {"Fraise": dict(body=(255, 176, 202), shade=(214, 98, 140), ...), ...}
+
+LISTING = dict(                 # Marketplace texts + import notes (tools/write_guides.py)
+    title_fr="...", title_en="...",          # without the colour; EN <= 42 chars
+    description_fr="...", description_en="...",
+    colour_en={"Fraise": "Pink", ...},       # one entry per colourway
+    colour_fr={"Fraise": "Rose"},            # optional French display overrides
+    placement_fr="Where it sits on the mannequin in the Accessory Fitting Tool.",
+)
 
 def build_shells() -> list[Shell]: ...   # geometry, origin = the attachment point
 def paint(ctx, C) -> (colour, shade): ...  # see ugclib/bake.py docstring

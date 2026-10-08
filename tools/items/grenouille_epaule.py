@@ -37,6 +37,25 @@ PREVIEW = {
     "buste": dict(cam="1.5,1.1,-2.6", target="-0.15,0.45,0", fov=38),
 }
 
+# Marketplace texts and import notes (used by tools/write_guides.py).
+LISTING = dict(
+    title_fr="Grenouille d'épaule au chapeau fraise",
+    title_en="Froggy Shoulder Pal w/ Strawberry Hat",
+    description_fr=("Une petite grenouille toute ronde qui s'installe sur ton épaule droite. "
+                    "Grands yeux brillants, sourire tout doux, joues roses, petites pattes et "
+                    "un mini chapeau fraise sur la tête. Existe en 5 coloris : Vert, Rose, "
+                    "Bleu, Citron et Choco !"),
+    description_en=("A chubby little frog that sits on your right shoulder. Big sparkly eyes, "
+                    "a sweet smile, rosy cheeks, tiny feet and a mini strawberry hat. "
+                    "Available in 5 colors: Green, Pink, Blue, Lemon and Choco!"),
+    colour_en={"Vert": "Green", "Fraise": "Pink", "Bleu": "Blue", "Citron": "Lemon",
+               "Choco": "Choco"},
+    colour_fr={"Fraise": "Rose"},   # avoids "chapeau fraise - Fraise" in the title
+    placement_fr=("La grenouille est assise sur le dessus du bras droit, à environ 0,45 stud "
+                  "du cou, les pattes posées sur l'épaule ; elle regarde vers l'avant, un peu "
+                  "tournée vers l'extérieur, et ne touche pas la tête."),
+)
+
 # Part ids, used by paint().
 PART_BODY = 0
 PART_EYE_L = 1
