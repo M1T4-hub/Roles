@@ -25,8 +25,8 @@ def write_obj(path, mtl_name, material, shells_merged, object_name):
     V, F, UV, FT = shells_merged
     N = vertex_normals(V, F)
     lines = [
-        "# Neko Bucket Hat - Roblox UGC rigid accessory (Hat)",
-        "# Units: studs, +Y up, avatar faces -Z. Origin = HatAttachment.",
+        f"# {object_name} - Roblox UGC rigid accessory",
+        "# Units: studs, +Y up, avatar faces -Z. Origin = the attachment point.",
         f"# Triangles: {sum(len(f) - 2 for f in F)}",
         f"mtllib {mtl_name}",
         f"o {object_name}",

@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""Check the exported hat against Roblox's rigid-accessory (Hat) rules.
+"""Check an exported item against Roblox's rigid-accessory rules.
 
-    python3 tools/validate_hat.py
+    python3 tools/validate_ugc.py <slug>          # e.g. neko-bucket-hat
+    python3 tools/validate_ugc.py --all
 
-Reads ugc/neko-bucket-hat/obj/NekoBucketHat.obj, the textures and the FBX files, prints a
-pass/fail table and exits non-zero if anything fails. Limits come from
-https://create.roblox.com/docs/avatar/rigid-accessories/specifications
+Reads ugc/<slug>/build/specs.json, obj/<Name>.obj, the textures and the FBX
+files, prints a pass/fail table and exits non-zero if anything fails.
+Limits come from https://create.roblox.com/docs/avatar/rigid-accessories/specifications
+(see tools/ugclib/specs.py).
 """
 
 from __future__ import annotations
 
 import glob
+import json
 import os
 import sys
 from collections import Counter, defaultdict
@@ -19,13 +22,9 @@ import numpy as np
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.normpath(os.path.join(HERE, "..", "ugc", "neko-bucket-hat"))
+sys.path.insert(0, HERE)
 
-MAX_TRIANGLES = 4000
-MAX_TEXTURE = 1024          # UV/texture page limit (Marketplace cap is 2048)
-# Hat bounding boxes (width X, height Y, depth Z), centred on the attachment.
-HAT_LIMITS = {"Classic": (3.0, 4.0, 3.0), "Normal": (1.87, 2.5, 1.87),
-              "Slender": (1.78, 2.5, 1.78)}
+from ugclib.specs import ATTACHMENTS, MAX_TEXTURE, MAX_TRIANGLES, fit_report  # noqa: E402
 
 
 def load_obj(path):
@@ -66,8 +65,12 @@ def shells_of(F, nv):
     return list(groups.values())
 
 
-def main():
-    V, VT, F, FT, mats = load_obj(os.path.join(OUT, "obj", "NekoBucketHat.obj"))
+def validate(slug):
+    out = os.path.normpath(os.path.join(HERE, "..", "ugc", slug))
+    with open(os.path.join(out, "build", "specs.json")) as fh:
+        specs = json.load(fh)
+    name, asset_type = specs["name"], specs["asset_type"]
+    V, VT, F, FT, mats = load_obj(os.path.join(out, "obj", f"{name}.obj"))
     results = []
 
     def check(name, ok, detail):
@@ -111,20 +114,25 @@ def main():
     check("UVs inside 0..1", VT.min() >= 0 and VT.max() <= 1,
           f"[{VT.min():.3f}, {VT.max():.3f}]")
 
-    lo, hi = V.min(0), V.max(0)
-    ext = np.maximum(np.abs(lo), np.abs(hi))       # half-extent around the attachment
-    for scale, (w, h, d) in HAT_LIMITS.items():
-        ok = ext[0] <= w / 2 and ext[1] <= h / 2 and ext[2] <= d / 2
-        check(f"Fits Hat box ({scale} {w} x {h} x {d})", ok,
-              f"needs {2 * ext[0]:.3f} x {2 * ext[1]:.3f} x {2 * ext[2]:.3f}")
+    check("Attachment matches asset type",
+          specs["attachment"] in ATTACHMENTS[asset_type][1],
+          f"{specs['attachment']} for {asset_type}")
+    for scale, (ok, need) in fit_report(V, asset_type).items():
+        required = scale in ("Classic", specs.get("aft_body_scale", "Classic"))
+        label = f"Fits {asset_type} box ({scale}{'' if required else ', optional'})"
+        check(label, ok or not required, ("" if ok else "OUTSIDE  ") + need)
 
-    for png in sorted(glob.glob(os.path.join(OUT, "textures", "*.png"))):
+    pngs = sorted(glob.glob(os.path.join(out, "textures", f"{name}_*_Albedo.png")))
+    check("One albedo per colourway", len(pngs) == len(specs["colourways"]),
+          f"{len(pngs)} textures / {len(specs['colourways'])} colourways")
+    for png in pngs:
         im = Image.open(png)
         ok = im.size[0] <= MAX_TEXTURE and im.size[1] <= MAX_TEXTURE and im.mode in ("RGB", "RGBA")
         check(f"Texture {os.path.basename(png)}", ok, f"{im.size[0]}x{im.size[1]} {im.mode}")
 
-    fbxs = sorted(glob.glob(os.path.join(OUT, "fbx", "*.fbx")))
-    check("FBX files present (one per colourway)", len(fbxs) >= 1, f"{len(fbxs)} files")
+    fbxs = sorted(glob.glob(os.path.join(out, "fbx", f"{name}_*.fbx")))
+    check("FBX files present (one per colourway)", len(fbxs) == len(specs["colourways"]),
+          f"{len(fbxs)} files")
     for fbx in fbxs:
         with open(fbx, "rb") as fh:
             head = fh.read(23)
@@ -133,10 +141,21 @@ def main():
 
     width = max(len(r[0]) for r in results)
     failed = 0
-    for name, ok, detail in results:
+    print(f"== {name} ({asset_type}, {specs['attachment']})")
+    for label, ok, detail in results:
         failed += not ok
-        print(f"{'PASS' if ok else 'FAIL'}  {name:<{width}}  {detail}")
-    print(f"\n{len(results) - failed}/{len(results)} checks passed")
+        print(f"{'PASS' if ok else 'FAIL'}  {label:<{width}}  {detail}")
+    print(f"{len(results) - failed}/{len(results)} checks passed\n")
+    return failed
+
+
+def main():
+    slugs = sys.argv[1:]
+    if not slugs or slugs == ["--all"]:
+        root = os.path.join(HERE, "..", "ugc")
+        slugs = sorted(d for d in os.listdir(root)
+                       if os.path.exists(os.path.join(root, d, "build", "specs.json")))
+    failed = sum(validate(s) for s in slugs)
     sys.exit(1 if failed else 0)
 
 

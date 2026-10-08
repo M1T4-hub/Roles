@@ -1,5 +1,5 @@
-# Neko Bucket Hat - Roblox UGC rigid accessory (Hat)
-# Units: studs, +Y up, avatar faces -Z. Origin = HatAttachment.
+# NekoBucketHat - Roblox UGC rigid accessory
+# Units: studs, +Y up, avatar faces -Z. Origin = the attachment point.
 # Triangles: 3820
 mtllib NekoBucketHat.mtl
 o NekoBucketHat

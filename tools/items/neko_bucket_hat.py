@@ -1,22 +1,36 @@
-"""Procedural geometry for the "Neko Bucket Hat" Roblox UGC hat.
+"""Neko Bucket Hat: cat-ear bucket hat with a coquette bow and a pearl.
 
-All units are Roblox studs. Axes follow Roblox: +Y is up, the avatar looks
-toward -Z, and +X is the avatar's right. The origin is the HatAttachment
-point (top centre of a standard R15 head, about 1.2 studs tall).
-
-Every part is built as a closed "loft" (rings of points joined by quads and
-closed by triangle fans), so each shell is watertight by construction.
+Item module for tools/build_ugc.py (see tools/items/README.md for the
+contract). Units are studs, Roblox axes (+Y up, avatar faces -Z), origin =
+HatAttachment (top centre of a 1.2-stud R15 head).
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
 import numpy as np
 
-TAU = 2.0 * np.pi
+from ugclib.bake import aa as _aa
+from ugclib.bake import mix
+from ugclib.geometry import TAU, loft, make_shell
+from ugclib.geometry import dense_arclength as _dense_arclength
+from ugclib.geometry import fillet_polyline as _fillet_polyline
+from ugclib.geometry import rot as _rot
+from ugclib.geometry import smoothstep as _smoothstep
 
-# Part ids, used by the texture baker.
+NAME = "NekoBucketHat"
+SLUG = "neko-bucket-hat"
+ASSET_TYPE = "Hat"
+ATTACHMENT = "HatAttachment"
+AFT_BODY_SCALE = "Classic"
+AO_RADIUS = 0.17
+# Preview cameras, relative to the attachment point (studs).
+PREVIEW = {
+    "front": dict(cam="1.95,0.8,-2.95", target="0,-0.08,0"),
+    "dos": dict(cam="-1.6,1.3,2.7", target="0,-0.08,0"),
+    "profil": dict(cam="-3.4,0.35,-0.6", target="0,-0.08,0"),
+}
+
+# Part ids, used by paint().
 PART_CROWN = 0
 PART_EAR_L = 1
 PART_EAR_R = 2
@@ -31,210 +45,39 @@ PART_PEARL = 8
 SEAM_ANGLE = np.pi / 2.0
 BOW_ANGLE = np.radians(-38.0)  # front-right side of the crown
 
+COLORWAYS = {
+    # Strawberry milk: pink body, cream bow
+    "Fraise": dict(
+        body=(255, 176, 202), shade=(214, 98, 140), ear_inner=(255, 112, 160),
+        ribbon=(255, 250, 244), ribbon_shade=(226, 186, 200),
+        lining=(255, 214, 226), paw=(255, 250, 244), pearl=(255, 255, 255)),
+    # Matcha latte: sage body, cream bow, pink inner ears
+    "Matcha": dict(
+        body=(176, 214, 150), shade=(96, 146, 86), ear_inner=(255, 176, 196),
+        ribbon=(255, 250, 236), ribbon_shade=(206, 204, 170),
+        lining=(226, 240, 208), paw=(255, 250, 236), pearl=(255, 255, 255)),
+    # Midnight: charcoal body, lilac bow (soft emo / y2k)
+    "Minuit": dict(
+        body=(58, 54, 74), shade=(22, 20, 34), ear_inner=(198, 170, 255),
+        ribbon=(198, 170, 255), ribbon_shade=(118, 92, 184),
+        lining=(92, 86, 116), paw=(198, 170, 255), pearl=(250, 246, 255)),
+    # Cloud: white body, baby-blue bow
+    "Nuage": dict(
+        body=(250, 250, 252), shade=(170, 182, 204), ear_inner=(255, 170, 196),
+        ribbon=(150, 200, 255), ribbon_shade=(86, 138, 214),
+        lining=(214, 232, 255), paw=(150, 200, 255), pearl=(255, 255, 255)),
+    # Cocoa: brown body, cream bow
+    "Choco": dict(
+        body=(150, 98, 70), shade=(84, 48, 32), ear_inner=(250, 190, 182),
+        ribbon=(255, 242, 224), ribbon_shade=(214, 180, 150),
+        lining=(196, 146, 114), paw=(255, 242, 224), pearl=(255, 252, 244)),
+}
 
-@dataclass
-class Shell:
-    name: str
-    part: int
-    V: np.ndarray                     # (n, 3) positions
-    faces: list                       # polygons (tuples of 3 or 4 vertex ids)
-    UV: np.ndarray                    # (k, 2) island-local UVs in [0, 1]
-    faces_uv: list                    # same layout as faces, ids into UV
-    attr: np.ndarray                  # (k, 2) per-UV-vertex bake parameters
-    island: tuple = (0.0, 0.0, 1.0, 1.0)   # atlas rect (u0, v0, u1, v1)
-    meta: dict = field(default_factory=dict)
-
-    def atlas_uv(self) -> np.ndarray:
-        u0, v0, u1, v1 = self.island
-        return np.column_stack(
-            (u0 + self.UV[:, 0] * (u1 - u0), v0 + self.UV[:, 1] * (v1 - v0))
-        )
-
-
-# ---------------------------------------------------------------------------
-# Generic closed loft
-# ---------------------------------------------------------------------------
-
-def loft(rings, apex0, apex1, v_rings, v_apex0, v_apex1, attr_v=None,
-         end_cap=None, u_by_arclength=True):
-    """Join K rings of M points into a closed surface.
-
-    rings   : (K, M, 3) ring points, ring order consistent along the loft.
-    apex0/1 : (3,) points closing the first / last ring with a fan, or None.
-    end_cap : optional list of polygons (indices into the last ring) used
-              instead of apex1 to close the last ring.
-    Returns V, faces, UV, faces_uv, attr with UV/attr in island space.
-    """
-    rings = np.asarray(rings, dtype=float)
-    K, M, _ = rings.shape
-    V = [rings.reshape(-1, 3)]
-    faces, faces_uv = [], []
-    UV, attr = [], []
-    attr_v = v_rings if attr_v is None else attr_v
-
-    # UV grid: (K, M + 1) so the seam column is duplicated. With
-    # u_by_arclength, u follows each ring's perimeter so flat sections
-    # (ears, ribbon) get an even texel density instead of crowding the rims.
-    ring_u = np.tile(np.arange(M + 1) / M, (K, 1))
-    if u_by_arclength:
-        seg = np.linalg.norm(np.roll(rings, -1, axis=1) - rings, axis=2)
-        cum = np.concatenate([np.zeros((K, 1)), np.cumsum(seg, axis=1)], axis=1)
-        ring_u = cum / cum[:, -1:]
-    for k in range(K):
-        for m in range(M + 1):
-            UV.append((ring_u[k, m], v_rings[k]))
-            attr.append((m / M, attr_v[k]))
-
-    def vid(k, m):
-        return k * M + (m % M)
-
-    def tid(k, m):
-        return k * (M + 1) + m
-
-    for k in range(K - 1):
-        for m in range(M):
-            faces.append((vid(k, m), vid(k, m + 1), vid(k + 1, m + 1), vid(k + 1, m)))
-            faces_uv.append((tid(k, m), tid(k, m + 1), tid(k + 1, m + 1), tid(k + 1, m)))
-
-    n_v = K * M
-    n_t = K * (M + 1)
-    if apex0 is not None:
-        V.append(np.asarray(apex0, float)[None])
-        a = n_v
-        n_v += 1
-        for m in range(M):
-            UV.append((0.5 * (ring_u[0, m] + ring_u[0, m + 1]), v_apex0))
-            attr.append(((m + 0.5) / M, attr_v[0] - (v_rings[0] - v_apex0)))
-            faces.append((a, vid(0, m + 1), vid(0, m)))
-            faces_uv.append((n_t, tid(0, m + 1), tid(0, m)))
-            n_t += 1
-    if apex1 is not None:
-        V.append(np.asarray(apex1, float)[None])
-        a = n_v
-        n_v += 1
-        for m in range(M):
-            UV.append((0.5 * (ring_u[-1, m] + ring_u[-1, m + 1]), v_apex1))
-            attr.append(((m + 0.5) / M, attr_v[-1] + (v_apex1 - v_rings[-1])))
-            faces.append((vid(K - 1, m), vid(K - 1, m + 1), a))
-            faces_uv.append((tid(K - 1, m), tid(K - 1, m + 1), n_t))
-            n_t += 1
-    if end_cap is not None:
-        for poly in end_cap:
-            faces.append(tuple(vid(K - 1, m) for m in poly))
-            faces_uv.append(tuple(tid(K - 1, m) for m in poly))
-
-    return (np.concatenate(V), faces, np.asarray(UV), faces_uv, np.asarray(attr))
-
-
-def make_shell(name, part, data, island, meta=None):
-    V, faces, UV, faces_uv, attr = data
-    s = Shell(name, part, V, faces, UV, faces_uv, attr, island, meta or {})
-    orient_outward(s)
-    return s
 
 
 # ---------------------------------------------------------------------------
-# Orientation helpers
+# Geometry
 # ---------------------------------------------------------------------------
-
-def _tris(faces):
-    out = []
-    for f in faces:
-        for i in range(1, len(f) - 1):
-            out.append((f[0], f[i], f[i + 1]))
-    return np.asarray(out)
-
-
-def signed_volume(V, faces):
-    T = _tris(faces)
-    a, b, c = V[T[:, 0]], V[T[:, 1]], V[T[:, 2]]
-    return np.einsum("ij,ij->i", a, np.cross(b, c)).sum() / 6.0
-
-
-def orient_outward(shell: Shell):
-    """Make winding consistent across the shell, then point it outward."""
-    faces = [list(f) for f in shell.faces]
-    faces_uv = [list(f) for f in shell.faces_uv]
-    edge_faces = {}
-    for fi, f in enumerate(faces):
-        for i in range(len(f)):
-            e = (f[i], f[(i + 1) % len(f)])
-            edge_faces.setdefault(frozenset(e), []).append(fi)
-
-    def directed(f):
-        return {(f[i], f[(i + 1) % len(f)]) for i in range(len(f))}
-
-    seen = [False] * len(faces)
-    for start in range(len(faces)):
-        if seen[start]:
-            continue
-        seen[start] = True
-        stack = [start]
-        while stack:
-            fi = stack.pop()
-            dirs = directed(faces[fi])
-            for (a, b) in dirs:
-                for fj in edge_faces[frozenset((a, b))]:
-                    if fj == fi or seen[fj]:
-                        continue
-                    if (a, b) in directed(faces[fj]):
-                        faces[fj].reverse()
-                        faces_uv[fj].reverse()
-                    seen[fj] = True
-                    stack.append(fj)
-
-    if signed_volume(shell.V, faces) < 0:
-        faces = [f[::-1] for f in faces]
-        faces_uv = [f[::-1] for f in faces_uv]
-    shell.faces = [tuple(f) for f in faces]
-    shell.faces_uv = [tuple(f) for f in faces_uv]
-
-
-# ---------------------------------------------------------------------------
-# Crown + brim: one revolved profile
-# ---------------------------------------------------------------------------
-
-def _fillet_polyline(points, radii, arc_steps=24):
-    """Polyline through `points` with circular fillets of radius radii[i].
-
-    Returns the dense points and, per point, the index of the key span
-    (points[i] -> points[i + 1]) it belongs to.
-    """
-    P = np.asarray(points, float)
-    out, span = [P[0]], [0]
-    for i in range(1, len(P) - 1):
-        r = radii[i]
-        a, b, c = P[i - 1], P[i], P[i + 1]
-        if r <= 0:
-            out.append(b)
-            span.append(i)
-            continue
-        d1 = (a - b) / np.linalg.norm(a - b)
-        d2 = (c - b) / np.linalg.norm(c - b)
-        half = np.arccos(np.clip(np.dot(d1, d2), -1, 1)) / 2.0
-        t = r / np.tan(half)
-        t = min(t, 0.48 * np.linalg.norm(a - b), 0.48 * np.linalg.norm(c - b))
-        r_eff = t * np.tan(half)
-        p1 = b + d1 * t
-        bis = (d1 + d2) / np.linalg.norm(d1 + d2)
-        centre = b + bis * (r_eff / np.sin(half))
-        p2 = b + d2 * t
-        a1 = np.arctan2(*(p1 - centre)[::-1])
-        a2 = np.arctan2(*(p2 - centre)[::-1])
-        da = (a2 - a1 + np.pi) % TAU - np.pi
-        for s in np.linspace(0, 1, arc_steps):
-            ang = a1 + da * s
-            out.append(centre + r_eff * np.array([np.cos(ang), np.sin(ang)]))
-            span.append(i - 1 if s < 0.5 else i)
-    out.append(P[-1])
-    span.append(len(P) - 2)
-    return np.asarray(out), np.asarray(span)
-
-
-def _dense_arclength(P):
-    seg = np.linalg.norm(np.diff(P, axis=0), axis=1)
-    return np.concatenate([[0.0], np.cumsum(seg)])
-
 
 BRIM_TOP_A = np.array([0.704, -0.338])
 BRIM_TOP_B = np.array([0.842, -0.418])
@@ -371,19 +214,6 @@ def brim_top_height(r):
 # Cat ears
 # ---------------------------------------------------------------------------
 
-def _rot(axis, ang):
-    axis = np.asarray(axis, float)
-    axis /= np.linalg.norm(axis)
-    x, y, z = axis
-    c, s = np.cos(ang), np.sin(ang)
-    C = 1 - c
-    return np.array([
-        [c + x * x * C, x * y * C - z * s, x * z * C + y * s],
-        [y * x * C + z * s, c + y * y * C, y * z * C - x * s],
-        [z * x * C - y * s, z * y * C + x * s, c + z * z * C],
-    ])
-
-
 def build_ear(side, island, part, M=14, K=10):
     """side = +1 (avatar right, +X) or -1 (avatar left)."""
     W, D, H = 0.350, 0.200, 0.385
@@ -437,11 +267,6 @@ def _band_frame(theta, out=0.0, y=BOW_Y):
     tangent = np.array([-np.sin(theta), 0.0, np.cos(theta)])
     p = radial * (BAND_R + out) + np.array([0.0, y, 0.0])
     return p, radial, tangent
-
-
-def _smoothstep(e0, e1, x):
-    t = np.clip((x - e0) / (e1 - e0), 0.0, 1.0)
-    return t * t * (3 - 2 * t)
 
 
 def build_knot(island):
@@ -593,11 +418,7 @@ def build_pearl(island, M=12, K=5):
     return make_shell("BowPearl", PART_PEARL, data, island)
 
 
-# ---------------------------------------------------------------------------
-# Assembly
-# ---------------------------------------------------------------------------
-
-def build_hat():
+def build_shells():
     shells = [build_crown()]
     # Lower atlas band (v in [0, 0.29]) holds the small parts.
     shells.append(build_ear(-1, island=(0.005, 0.005, 0.215, 0.29), part=PART_EAR_L))
@@ -611,19 +432,83 @@ def build_hat():
     return shells
 
 
-def merged(shells):
-    """Concatenate shells into one mesh (positions, polygons, atlas UVs)."""
-    V, F, UV, FT = [], [], [], []
-    ov = ot = 0
-    for s in shells:
-        V.append(s.V)
-        UV.append(s.atlas_uv())
-        F += [tuple(i + ov for i in f) for f in s.faces]
-        FT += [tuple(i + ot for i in f) for f in s.faces_uv]
-        ov += len(s.V)
-        ot += len(s.UV)
-    return np.concatenate(V), F, np.concatenate(UV), FT
+
+# ---------------------------------------------------------------------------
+# Paint
+# ---------------------------------------------------------------------------
+
+def _paw_dist(s, y):
+    """Paw print (main pad + 4 toe beans); < 1 inside. Local coords in studs."""
+    def ell(cx, cy, rx, ry, rot=0.0):
+        cs, sn = np.cos(rot), np.sin(rot)
+        dx, dy = s - cx, y - cy
+        x2 = (dx * cs + dy * sn) / rx
+        y2 = (-dx * sn + dy * cs) / ry
+        return np.sqrt(x2 * x2 + y2 * y2)
+    k = 1.2   # overall scale
+    pad = np.minimum(ell(0.0, -0.018 * k, 0.040 * k, 0.030 * k),
+                     ell(0.0, -0.032 * k, 0.032 * k, 0.024 * k))
+    toes = np.minimum.reduce([
+        ell(-0.044 * k, 0.018 * k, 0.0135 * k, 0.017 * k, 0.35),
+        ell(-0.016 * k, 0.040 * k, 0.0135 * k, 0.018 * k, 0.10),
+        ell(0.016 * k, 0.040 * k, 0.0135 * k, 0.018 * k, -0.10),
+        ell(0.044 * k, 0.018 * k, 0.0135 * k, 0.017 * k, -0.35),
+    ])
+    return np.minimum(pad, toes)
 
 
-def triangle_count(faces):
-    return sum(len(f) - 2 for f in faces)
+def paint(ctx, C):
+    """Colour zones: body, inner ears, paw print, lining, satin ribbon, pearl."""
+    P, part, a0, a1 = ctx["P"], ctx["part"], ctx["a0"], ctx["a1"]
+    shells = ctx["shells"]
+    n = len(P)
+    marks = shells[0].meta["marks"]
+    crown = part == PART_CROWN
+    t = a1
+    r_xz = np.hypot(P[:, 0], P[:, 2])
+    theta = np.arctan2(P[:, 2], P[:, 0])
+
+    def region(name):
+        lo, hi = marks[name]
+        return crown & (t >= lo) & (t <= hi)
+
+    band = region("band")
+    lining = region("brim_under") | region("inner")
+    ears = (part == PART_EAR_L) | (part == PART_EAR_R)
+    ribbon = band | np.isin(part, [PART_KNOT, PART_LOOP_L, PART_LOOP_R,
+                                   PART_TAIL_L, PART_TAIL_R])
+    pearl = part == PART_PEARL
+    body = (crown & ~band & ~lining) | ears
+
+    # Inner ear: rounded-triangle patch on the cupped front face.
+    phi = a0 * 2 * np.pi
+    h = a1
+    lateral = np.abs(np.cos(phi))
+    front = np.sin(phi) < 0
+    half_w = 0.80 * (1.0 - 0.45 * h)            # narrows toward the tip
+    d_side = (lateral - half_w) / 0.80
+    d_bot = (0.12 - h) / 0.5
+    d_top = (h - 0.84) / 0.5
+    d_ear = np.maximum.reduce([d_side, d_bot, d_top])
+    ear_in = ears * front * _aa(d_ear, 0.02)
+
+    # Paw print on the crown front (avatar looks toward -Z).
+    d_ang = np.angle(np.exp(1j * (theta + np.pi / 2)))
+    s_loc = d_ang * r_xz
+    y_loc = P[:, 1] + 0.010
+    on_side = crown & (t > marks["side"][0] + 0.01) & (t < marks["band"][0] - 0.004)
+    paw = on_side * _aa(_paw_dist(s_loc, y_loc) - 1.0, 0.06)
+
+    col = np.zeros((n, 3))
+    shade_tint = np.zeros((n, 3))
+    col[body] = C["body"]
+    shade_tint[body] = C["shade"]
+    col = mix(col, C["ear_inner"][None], ear_in)
+    col = mix(col, C["paw"][None], paw)
+    col[lining] = C["lining"]
+    shade_tint[lining] = C["shade"]
+    col[ribbon] = C["ribbon"]
+    shade_tint[ribbon] = C["ribbon_shade"]
+    col[pearl] = C["pearl"]
+    shade_tint[pearl] = C["ribbon_shade"]
+    return col, shade_tint

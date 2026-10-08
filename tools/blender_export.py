@@ -1,6 +1,9 @@
 """Export Studio-ready FBX files with Blender (run with the `bpy` module).
 
-    <python-with-bpy> tools/blender_export.py
+    <python-with-bpy> tools/blender_export.py <slug>      # e.g. neko-bucket-hat
+
+Reads ugc/<slug>/build/specs.json (written by tools/build_ugc.py) for the
+item name and colourways, and writes ugc/<slug>/fbx/<Name>_<Colour>.fbx.
 
 Uses the export settings from Roblox's creator docs:
   * Path Mode = Copy + Embed Textures   (the texture travels inside the .fbx)
@@ -20,10 +23,15 @@ import bpy  # noqa: I001  (bpy must be imported before bmesh)
 import bmesh
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.normpath(os.path.join(HERE, "..", "ugc", "neko-bucket-hat"))
-NAME = "NekoBucketHat"
-COLOURS = ["Fraise", "Matcha", "Minuit", "Nuage", "Choco"]
 AXES = dict(forward_axis="Z", up_axis="Y")
+
+_args = [a for a in sys.argv[1:] if not a.startswith("-")]
+SLUG = _args[-1] if _args else "neko-bucket-hat"
+OUT = os.path.normpath(os.path.join(HERE, "..", "ugc", SLUG))
+with open(os.path.join(OUT, "build", "specs.json")) as _fh:
+    _SPECS = json.load(_fh)
+NAME = _SPECS["name"]
+COLOURS = _SPECS["colourways"]
 
 
 def reset():

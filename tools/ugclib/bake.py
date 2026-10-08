@@ -1,13 +1,21 @@
-"""Texture baking for the Neko Bucket Hat - clean "simple plastic" style.
+"""UV-space texture baking for Roblox rigid accessories ("simple plastic").
 
-Every texel of the UV atlas is mapped back to its 3D surface point
-(G-buffer rasterised in UV space). Colour zones (body, inner ears, ribbon,
-paw print, lining) are drawn from those 3D points, so edges stay crisp and
-seam-free, and a soft ambient occlusion computed against a voxelised copy of
-the hat is baked in so the shape reads well under any Roblox lighting.
+Every texel of the UV atlas is mapped back to its 3D surface point (a
+G-buffer rasterised in UV space), so an item's paint() function can draw
+colour zones from 3D positions: crisp, seam-free and undistorted. A soft
+ambient occlusion, computed against a voxelised copy of the item, is baked
+in so the shape reads well under any Roblox lighting.
 
-No fur, no noise, no normal map: flat, glossy-looking plastic colours.
-Output per colourway: one 1024 px albedo (MeshPart.TextureID).
+Item contract (see tools/items/*.py):
+
+    def paint(ctx, C):
+        # ctx: dict of per-texel arrays (only texels covered by the mesh):
+        #   P (n,3) position, N (n,3) normal, part (n,) part id,
+        #   a0, a1 (n,) the shell's bake parameters, ao (n,) 0..1,
+        #   shells (list of Shell), plus helpers aa, smoothstep, mix.
+        # C: the colourway with every colour already in linear RGB (3,).
+        # Return (colour, shade): two (n,3) linear-RGB arrays. `shade` is the
+        # tint used in occluded areas (usually a darker, saturated version).
 """
 
 from __future__ import annotations
@@ -15,40 +23,8 @@ from __future__ import annotations
 import numpy as np
 from PIL import Image
 
-import hat_geometry as G
-from hat_export import vertex_normals
-
-# ---------------------------------------------------------------------------
-# Colourways (sRGB 0-255)
-# ---------------------------------------------------------------------------
-
-COLORWAYS = {
-    # Strawberry milk: pink body, cream bow
-    "Fraise": dict(
-        body=(255, 176, 202), shade=(214, 98, 140), ear_inner=(255, 112, 160),
-        ribbon=(255, 250, 244), ribbon_shade=(226, 186, 200),
-        lining=(255, 214, 226), paw=(255, 250, 244), pearl=(255, 255, 255)),
-    # Matcha latte: sage body, cream bow, pink inner ears
-    "Matcha": dict(
-        body=(176, 214, 150), shade=(96, 146, 86), ear_inner=(255, 176, 196),
-        ribbon=(255, 250, 236), ribbon_shade=(206, 204, 170),
-        lining=(226, 240, 208), paw=(255, 250, 236), pearl=(255, 255, 255)),
-    # Midnight: charcoal body, lilac bow (soft emo / y2k)
-    "Minuit": dict(
-        body=(58, 54, 74), shade=(22, 20, 34), ear_inner=(198, 170, 255),
-        ribbon=(198, 170, 255), ribbon_shade=(118, 92, 184),
-        lining=(92, 86, 116), paw=(198, 170, 255), pearl=(250, 246, 255)),
-    # Cloud: white body, baby-blue bow
-    "Nuage": dict(
-        body=(250, 250, 252), shade=(170, 182, 204), ear_inner=(255, 170, 196),
-        ribbon=(150, 200, 255), ribbon_shade=(86, 138, 214),
-        lining=(214, 232, 255), paw=(150, 200, 255), pearl=(255, 255, 255)),
-    # Cocoa: brown body, cream bow
-    "Choco": dict(
-        body=(150, 98, 70), shade=(84, 48, 32), ear_inner=(250, 190, 182),
-        ribbon=(255, 242, 224), ribbon_shade=(214, 180, 150),
-        lining=(196, 146, 114), paw=(255, 242, 224), pearl=(255, 252, 244)),
-}
+from .export import vertex_normals
+from .geometry import tris
 
 
 def srgb_to_lin(c):
@@ -157,7 +133,7 @@ def voxelize(shells, h=0.008, pad=0.05):
     xs = lo[0] + (np.arange(n[0]) + 0.5) * h + 1.3e-5
     zs = lo[2] + (np.arange(n[2]) + 0.5) * h + 2.1e-5
     for s in shells:
-        T = G._tris(s.faces)
+        T = tris(s.faces)
         A, B, C = s.V[T[:, 0]], s.V[T[:, 1]], s.V[T[:, 2]]
         cols, ys = [], []
         for a, b, c in zip(A, B, C):
@@ -230,7 +206,7 @@ def ambient_occlusion(P, N, vox, samples=40, max_dist=0.17, seed=3):
     T = np.cross(up, N)
     T /= np.linalg.norm(T, axis=1, keepdims=True)
     B = np.cross(N, T)
-    base = P + N * 0.013
+    base = P + N * max(0.013, 1.6 * vox["h"])
     wsum = 0.0
     for j in range(samples):
         d = T * local[j, 0] + B * local[j, 1] + N * local[j, 2]
@@ -240,113 +216,47 @@ def ambient_occlusion(P, N, vox, samples=40, max_dist=0.17, seed=3):
     return 1.0 - ao / wsum
 
 
-# ---------------------------------------------------------------------------
-# Colour zones
-# ---------------------------------------------------------------------------
-
-def _paw_dist(s, y):
-    """Paw print (main pad + 4 toe beans); < 1 inside. Local coords in studs."""
-    def ell(cx, cy, rx, ry, rot=0.0):
-        cs, sn = np.cos(rot), np.sin(rot)
-        dx, dy = s - cx, y - cy
-        x2 = (dx * cs + dy * sn) / rx
-        y2 = (-dx * sn + dy * cs) / ry
-        return np.sqrt(x2 * x2 + y2 * y2)
-    k = 1.2   # overall scale
-    pad = np.minimum(ell(0.0, -0.018 * k, 0.040 * k, 0.030 * k),
-                     ell(0.0, -0.032 * k, 0.032 * k, 0.024 * k))
-    toes = np.minimum.reduce([
-        ell(-0.044 * k, 0.018 * k, 0.0135 * k, 0.017 * k, 0.35),
-        ell(-0.016 * k, 0.040 * k, 0.0135 * k, 0.018 * k, 0.10),
-        ell(0.016 * k, 0.040 * k, 0.0135 * k, 0.018 * k, -0.10),
-        ell(0.044 * k, 0.018 * k, 0.0135 * k, 0.017 * k, -0.35),
-    ])
-    return np.minimum(pad, toes)
 
 
-def _aa(d, px):
+def aa(d, px):
     """Anti-aliased inside mask from a distance-like field (inside < 0)."""
     return np.clip(0.5 - d / px, 0.0, 1.0)
 
 
-def bake(shells, colorways, size=1024, log=print):
+def bake_albedos(shells, colorways, paint, size=1024, ao_strength=0.75,
+                 light_strength=0.14, ao_radius=0.17, log=print):
+    """Bake one albedo PIL image per colourway. Returns (albedos, ctx).
+
+    ao_radius (studs) is how far occluders are searched; scale it with the
+    item (0.17 suits a hat, ~0.3-0.4 suits wings or a backpack).
+    """
     log("  rasterising UV G-buffer ...")
     gb = rasterize(shells, size)
     m = gb["mask"]
-    P = gb["pos"][m]
-    N = gb["nrm"][m]
-    part = gb["part"][m]
-    a0 = gb["a0"][m]
-    a1 = gb["a1"][m]
-    n = len(P)
-
+    ctx = dict(P=gb["pos"][m], N=gb["nrm"][m], part=gb["part"][m],
+               a0=gb["a0"][m], a1=gb["a1"][m], shells=shells,
+               aa=aa, smoothstep=smoothstep, mix=mix)
+    n = len(ctx["P"])
     log("  voxelising + ambient occlusion ...")
-    vox = voxelize(shells)
+    allV = np.concatenate([s.V for s in shells])
+    extent = float((allV.max(0) - allV.min(0)).max())
+    vox = voxelize(shells, h=max(0.008, extent / 300.0))
     ao = np.empty(n)
     for i in range(0, n, 120000):
-        ao[i:i + 120000] = ambient_occlusion(P[i:i + 120000], N[i:i + 120000], vox)
-
-    log("  painting colour zones ...")
-    marks = shells[0].meta["marks"]
-    crown = part == G.PART_CROWN
-    t = a1
-    r_xz = np.hypot(P[:, 0], P[:, 2])
-    theta = np.arctan2(P[:, 2], P[:, 0])
-
-    def region(name):
-        lo, hi = marks[name]
-        return crown & (t >= lo) & (t <= hi)
-
-    band = region("band")
-    lining = region("brim_under") | region("inner")
-    ears = (part == G.PART_EAR_L) | (part == G.PART_EAR_R)
-    ribbon = band | np.isin(part, [G.PART_KNOT, G.PART_LOOP_L, G.PART_LOOP_R,
-                                   G.PART_TAIL_L, G.PART_TAIL_R])
-    pearl = part == G.PART_PEARL
-    body = (crown & ~band & ~lining) | ears
-
-    # Inner ear: rounded-triangle patch on the cupped front face.
-    phi = a0 * 2 * np.pi
-    h = a1
-    lateral = np.abs(np.cos(phi))
-    front = np.sin(phi) < 0
-    half_w = 0.80 * (1.0 - 0.45 * h)            # narrows toward the tip
-    d_side = (lateral - half_w) / 0.80
-    d_bot = (0.12 - h) / 0.5
-    d_top = (h - 0.84) / 0.5
-    d_ear = np.maximum.reduce([d_side, d_bot, d_top])
-    ear_in = ears * front * _aa(d_ear, 0.02)
-
-    # Paw print on the crown front (avatar looks toward -Z).
-    d_ang = np.angle(np.exp(1j * (theta + np.pi / 2)))
-    s_loc = d_ang * r_xz
-    y_loc = P[:, 1] + 0.010
-    on_side = crown & (t > marks["side"][0] + 0.01) & (t < marks["band"][0] - 0.004)
-    paw = on_side * _aa(_paw_dist(s_loc, y_loc) - 1.0, 0.06)
-
-    # Soft gloss: a light top-down gradient gives the "toy plastic" look.
-    light = 0.86 + 0.14 * np.clip(N[:, 1] * 0.5 + 0.5, 0, 1)
-    occl = np.clip(ao, 0, 1) ** 1.3
-
+        ao[i:i + 120000] = ambient_occlusion(ctx["P"][i:i + 120000], ctx["N"][i:i + 120000],
+                                             vox, max_dist=ao_radius)
+    ctx["ao"] = np.clip(ao, 0, 1)
+    occl = ctx["ao"] ** 1.3
+    light = (1.0 - light_strength) + light_strength * np.clip(ctx["N"][:, 1] * 0.5 + 0.5, 0, 1)
     albedos = {}
     for name, cw in colorways.items():
+        log(f"  painting {name} ...")
         C = {k: srgb_to_lin(v) for k, v in cw.items()}
-        col = np.zeros((n, 3))
-        shade_tint = np.zeros((n, 3))
-        col[body] = C["body"]
-        shade_tint[body] = C["shade"]
-        col = mix(col, C["ear_inner"][None], ear_in)
-        col = mix(col, C["paw"][None], paw)
-        col[lining] = C["lining"]
-        shade_tint[lining] = C["shade"]
-        col[ribbon] = C["ribbon"]
-        shade_tint[ribbon] = C["ribbon_shade"]
-        col[pearl] = C["pearl"]
-        shade_tint[pearl] = C["ribbon_shade"]
-        # coloured (not grey) occlusion keeps the plastic clean and saturated
-        col = mix(shade_tint * 0.85, col, 0.25 + 0.75 * occl) * light[:, None]
+        col, shade = paint(ctx, C)
+        col = mix(np.asarray(shade) * 0.85, np.asarray(col), (1 - ao_strength) + ao_strength * occl)
+        col = col * light[:, None]
         img = np.zeros((size, size, 3))
         img[m] = lin_to_srgb(col)
         img = dilate(img, m, passes=16)
         albedos[name] = Image.fromarray((np.clip(img, 0, 1) * 255 + 0.5).astype(np.uint8))
-    return albedos, gb
+    return albedos, ctx

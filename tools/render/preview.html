@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Neko Bucket Hat preview</title>
+<title>UGC preview</title>
 <style>
   html, body { margin: 0; background: #f4eef1; overflow: hidden; }
   canvas { display: block; }
@@ -16,60 +16,128 @@
 </head>
 <body>
 <script type="module">
+// Query parameters:
+//   item=<slug>          folder in ugc/ (default neko-bucket-hat)
+//   albedo=<file.png>    texture in ugc/<slug>/textures/
+//   attach=<Name>        attachment the mesh origin sits on (default HatAttachment)
+//   cam=x,y,z target=x,y,z   camera, RELATIVE to the attachment point
+//   body=0               hide the mannequin;  w, h, fov, bg
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 const q = new URLSearchParams(location.search);
 const W = +(q.get("w") || 900), H = +(q.get("h") || 900);
-const base = q.get("base") || "../../ugc/neko-bucket-hat/";
+const item = q.get("item") || "neko-bucket-hat";
+const base = `../../ugc/${item}/`;
 const albedo = q.get("albedo");
-const showHead = q.get("head") !== "0";
+const showBody = q.get("body") !== "0" && q.get("head") !== "0";
+const attach = q.get("attach") || "HatAttachment";
 const cam = (q.get("cam") || "1.5,0.55,-2.3").split(",").map(Number);
 const target = (q.get("target") || "0,-0.12,0").split(",").map(Number);
 const bg = q.get("bg") || "#f4eef1";
 const fov = +(q.get("fov") || 30);
+
+// Classic R15 block mannequin (studs). UpperTorso 2 x 1.6 x 1 centred at the
+// origin, head 1.2 tall on top. Attachment positions follow the R15 rig.
+const HEAD_C = new THREE.Vector3(0, 1.3, 0);
+const ATTACH = {
+  HatAttachment: [0, 1.9, 0], HairAttachment: [0, 1.9, 0],
+  FaceFrontAttachment: [0, 1.3, -0.6], FaceCenterAttachment: [0, 1.3, 0],
+  NeckAttachment: [0, 0.8, 0], BodyFrontAttachment: [0, 0, -0.5],
+  BodyBackAttachment: [0, 0, 0.5],
+  RightCollarAttachment: [1, 0.8, 0], LeftCollarAttachment: [-1, 0.8, 0],
+  RightShoulderAttachment: [1.5, 0.8, 0], LeftShoulderAttachment: [-1.5, 0.8, 0],
+  WaistFrontAttachment: [0, -1.0, -0.5], WaistCenterAttachment: [0, -1.0, 0],
+  WaistBackAttachment: [0, -1.0, 0.5],
+};
+const A = new THREE.Vector3(...(ATTACH[attach] || ATTACH.HatAttachment));
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1);
 renderer.setSize(W, H);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NoToneMapping;
-renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(bg);
-const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
 
-const camera = new THREE.PerspectiveCamera(fov, W / H, 0.05, 50);
-camera.position.set(...cam);
-camera.lookAt(...target);
+const camera = new THREE.PerspectiveCamera(fov, W / H, 0.05, 80);
+camera.position.set(A.x + cam[0], A.y + cam[1], A.z + cam[2]);
+camera.lookAt(A.x + target[0], A.y + target[1], A.z + target[2]);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0xe9d9df, 0.45));
 const key = new THREE.DirectionalLight(0xffffff, 1.25);
-key.position.set(2.0, 3.5, -2.5);
+key.position.set(A.x + 2.0, A.y + 3.5, A.z - 2.5);
+key.target.position.copy(A);
+scene.add(key.target);
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);
-key.shadow.camera.left = -1.5; key.shadow.camera.right = 1.5;
-key.shadow.camera.top = 1.5; key.shadow.camera.bottom = -1.5;
+for (const k of ["left", "bottom"]) key.shadow.camera[k] = -3;
+for (const k of ["right", "top"]) key.shadow.camera[k] = 3;
 key.shadow.bias = -0.0004;
 key.shadow.normalBias = 0.01;
 key.shadow.radius = 4;
 scene.add(key);
 const rim = new THREE.DirectionalLight(0xffe8f0, 0.7);
-rim.position.set(-2.5, 1.5, 2.5);
+rim.position.set(A.x - 2.5, A.y + 1.5, A.z + 2.5);
 scene.add(rim);
 
 const loader = new THREE.TextureLoader();
-function tex(name, srgb) {
+function tex(name) {
   return new Promise((res) => loader.load(base + name, (t) => {
-    t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 8;
     res(t);
   }, undefined, () => res(null)));
+}
+
+function addMannequin() {
+  const skin = new THREE.MeshStandardMaterial({ color: 0xf2d27a, roughness: 0.55 });
+  const shirt = new THREE.MeshStandardMaterial({ color: 0xc9d6e6, roughness: 0.6 });
+  const pants = new THREE.MeshStandardMaterial({ color: 0x8fa3bd, roughness: 0.6 });
+  const add = (geo, mat, x, y, z) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.castShadow = m.receiveShadow = true;
+    scene.add(m);
+  };
+  // Head: rounded cylinder, 1.2 studs.
+  const pts = [];
+  const R = 0.6, Hh = 1.2, rr = 0.26;
+  pts.push(new THREE.Vector2(0, -Hh / 2));
+  for (let i = 0; i <= 10; i++) {
+    const a = -Math.PI / 2 + (i / 10) * (Math.PI / 2);
+    pts.push(new THREE.Vector2(R - rr + rr * Math.cos(a), -Hh / 2 + rr + rr * Math.sin(a)));
+  }
+  for (let i = 0; i <= 10; i++) {
+    const a = (i / 10) * (Math.PI / 2);
+    pts.push(new THREE.Vector2(R - rr + rr * Math.cos(a), Hh / 2 - rr + rr * Math.sin(a)));
+  }
+  pts.push(new THREE.Vector2(0, Hh / 2));
+  add(new THREE.LatheGeometry(pts, 64), skin, HEAD_C.x, HEAD_C.y, HEAD_C.z);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x2a2230, roughness: 0.4 });
+  for (const s of [-1, 1]) {
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.055, 24, 16), eyeMat);
+    e.scale.set(0.8, 1.25, 0.35);
+    e.position.set(0.2 * s, HEAD_C.y - 0.02, -0.6);
+    scene.add(e);
+  }
+  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.018, 8, 32, Math.PI * 0.7), eyeMat);
+  mouth.rotation.z = Math.PI + Math.PI * 0.15;
+  mouth.position.set(0, HEAD_C.y - 0.14, -0.6);
+  scene.add(mouth);
+  // Torso, arms, legs (R15 block proportions).
+  add(new RoundedBoxGeometry(2, 1.6, 1, 4, 0.12), shirt, 0, 0, 0);
+  add(new RoundedBoxGeometry(2, 0.4, 1, 4, 0.1), pants, 0, -1.0, 0);
+  for (const s of [-1, 1]) {
+    add(new RoundedBoxGeometry(1, 2, 1, 4, 0.12), skin, 1.5 * s, -0.2, 0);
+    add(new RoundedBoxGeometry(1, 2, 1, 4, 0.12), pants, 0.5 * s, -2.2, 0);
+  }
 }
 
 async function main() {
@@ -79,52 +147,14 @@ async function main() {
   g.setAttribute("normal", new THREE.Float32BufferAttribute(data.normal, 3));
   g.setAttribute("uv", new THREE.Float32BufferAttribute(data.uv, 2));
   g.setIndex(data.index);
-
   // Roblox "Plastic": smooth, slightly glossy, non-metallic.
-  const matOpts = { roughness: 0.55, metalness: 0.0 };
-  matOpts.map = await tex("textures/" + albedo, true);
-  const hat = new THREE.Mesh(g, new THREE.MeshStandardMaterial(matOpts));
-  hat.castShadow = true;
-  hat.receiveShadow = true;
-  scene.add(hat);
-
-  if (showHead) {
-    // Classic Roblox-style head: rounded cylinder, 1.2 studs, top at y = 0.
-    const pts = [];
-    const R = 0.6, Hh = 1.2, rr = 0.26;
-    pts.push(new THREE.Vector2(0, -Hh));
-    for (let i = 0; i <= 10; i++) {
-      const a = -Math.PI / 2 + (i / 10) * (Math.PI / 2);
-      pts.push(new THREE.Vector2(R - rr + rr * Math.cos(a), -Hh + rr + rr * Math.sin(a)));
-    }
-    for (let i = 0; i <= 10; i++) {
-      const a = (i / 10) * (Math.PI / 2);
-      pts.push(new THREE.Vector2(R - rr + rr * Math.cos(a), -rr + rr * Math.sin(a)));
-    }
-    pts.push(new THREE.Vector2(0, 0));
-    const head = new THREE.Mesh(new THREE.LatheGeometry(pts, 64),
-      new THREE.MeshStandardMaterial({ color: 0xf2d27a, roughness: 0.55 }));
-    head.castShadow = true; head.receiveShadow = true;
-    scene.add(head);
-    const eyeMat = new THREE.MeshStandardMaterial({ color: 0x2a2230, roughness: 0.4 });
-    for (const s of [-1, 1]) {
-      const e = new THREE.Mesh(new THREE.SphereGeometry(0.055, 24, 16), eyeMat);
-      e.scale.set(0.8, 1.25, 0.35);
-      e.position.set(0.2 * s, -0.62, -0.6);
-      scene.add(e);
-    }
-    const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.018, 8, 32, Math.PI * 0.7),
-      eyeMat);
-    mouth.rotation.z = Math.PI + Math.PI * 0.15;
-    mouth.position.set(0, -0.74, -0.6);
-    scene.add(mouth);
-    // neck/torso hint
-    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.4, 32),
-      new THREE.MeshStandardMaterial({ color: 0xf2d27a, roughness: 0.6 }));
-    torso.position.set(0, -1.35, 0);
-    scene.add(torso);
-  }
-
+  const mat = new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.0 });
+  if (albedo) mat.map = await tex("textures/" + albedo);
+  const mesh = new THREE.Mesh(g, mat);
+  mesh.position.copy(A);
+  mesh.castShadow = mesh.receiveShadow = true;
+  scene.add(mesh);
+  if (showBody) addMannequin();
   renderer.render(scene, camera);
   window.__ready = true;
 }

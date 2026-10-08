@@ -22,7 +22,6 @@ ugc/neko-bucket-hat/
 │   ├── NekoBucketHat_Minuit.fbx
 │   ├── NekoBucketHat_Nuage.fbx
 │   └── NekoBucketHat_Choco.fbx
-├── roblox/VerifierChapeau.lua  ← contrôle final dans Studio avant publication
 ├── textures/                 ← les PNG 1024×1024 (au cas où, voir dépannage)
 ├── obj/                      ← même maillage en .obj (secours)
 └── previews/                 ← images de présentation
@@ -53,7 +52,7 @@ Chaque `.fbx` contient **le maillage + la texture intégrée**. Ils ont été ex
 
 ### 3. Vérifier (10 secondes)
 1. Sélectionne l'`Accessory` dans l'Explorer.
-2. **View › Command Bar**, colle tout le contenu de [`roblox/VerifierChapeau.lua`](ugc/neko-bucket-hat/roblox/VerifierChapeau.lua) puis appuie sur Entrée.
+2. **View › Command Bar**, colle tout le contenu de [`ugc/VerifierUGC.lua`](ugc/VerifierUGC.lua) (valable pour tous les accessoires) puis appuie sur Entrée.
 3. Dans **Output**, tu dois lire `🎉 Prêt`. Le script corrige tout seul ce que Roblox exige (type Hat, matériau Plastic, transparence 0) et signale le reste.
 
 ### 4. Uploader
@@ -96,7 +95,7 @@ Un bob trop mignon avec oreilles de chat, nœud coquette à perle et petite patt
 
 ## ✅ Conformité vérifiée
 
-Mesuré automatiquement par `tools/validate_hat.py` et par un aller-retour d'import dans Blender (`tools/blender_export.py`), selon les [spécifications des accessoires rigides Roblox](https://create.roblox.com/docs/avatar/rigid-accessories/specifications) :
+Mesuré automatiquement par `tools/validate_ugc.py` et par un aller-retour d'import dans Blender (`tools/blender_export.py`), selon les [spécifications des accessoires rigides Roblox](https://create.roblox.com/docs/avatar/rigid-accessories/specifications) :
 
 | Règle Roblox | Limite | Neko Bucket Hat |
 |---|---|---|
@@ -109,7 +108,7 @@ Mesuré automatiquement par `tools/validate_hat.py` et par un aller-retour d'imp
 | Boîte Hat Slender | 1,78 × 2,5 × 1,78 | ✅ 1,74 × 1,06 × 1,74 |
 | UV | 1 seul jeu, dans 0–1 | ✅ |
 | Texture | ≤ 1024 (UV) / ≤ 2048 (Marketplace) | ✅ 1024 × 1024 PNG |
-| Matériau / transparence | Plastic / 0 | ✅ (forcé par `VerifierChapeau.lua`) |
+| Matériau / transparence | Plastic / 0 | ✅ (forcé par `VerifierUGC.lua`) |
 
 Origine du maillage = point `HatAttachment` (sommet d'une tête R15 de 1,2 stud), axes Roblox (Y en haut, avant = −Z).
 
@@ -124,17 +123,16 @@ Origine du maillage = point `HatAttachment` (sommet d'une tête R15 de 1,2 stud)
 
 ---
 
-## 🔁 Modifier ou régénérer le chapeau
+## 🔁 Modifier ou régénérer un objet
 
-Tout est procédural. Les formes sont dans `tools/hat_geometry.py`, les couleurs dans `COLORWAYS` de `tools/hat_texture.py`.
+Tout est procédural. Chaque objet est un module dans `tools/items/` (formes, couleurs dans `COLORWAYS`, zones de couleur dans `paint`). Le contrat est décrit dans [`tools/items/README.md`](tools/items/README.md).
 
 ```bash
 pip install -r tools/requirements.txt
-python3 tools/build_hat.py                 # maillage .obj + textures (5 coloris)
-python3 -m pip install bpy                 # Blender en module Python (≈ 400 Mo)
-python3 tools/blender_export.py            # FBX Studio-ready + contrôle aller-retour
-python3 tools/validate_hat.py              # contrôle des règles UGC
-cd tools/render && npm install && node render.mjs out.png "albedo=NekoBucketHat_Fraise_Albedo.png"   # aperçu
+python3 tools/build_ugc.py neko_bucket_hat          # maillage .obj + textures
+python3 -m pip install bpy                           # Blender en module Python (≈ 400 Mo)
+python3 tools/blender_export.py neko-bucket-hat      # FBX prêts pour Studio + contrôle aller-retour
+python3 tools/validate_ugc.py --all                  # règles UGC Roblox
+cd tools/render && npm install && cd ../..
+python3 tools/render_previews.py neko-bucket-hat     # aperçus
 ```
-
-Pour créer un nouveau coloris, ajoute une entrée dans `COLORWAYS` et dans la liste `COLOURS` de `tools/blender_export.py`, puis relance les trois scripts.
