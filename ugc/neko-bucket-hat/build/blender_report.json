@@ -1,0 +1,157 @@
+{
+  "Fraise": {
+    "source": {
+      "triangles": 3820,
+      "vertices": 1928,
+      "faces": 2028,
+      "non_manifold_edges": 0,
+      "boundary_edges": 0,
+      "degenerate_faces": 0,
+      "ngons": 0,
+      "shells": 9,
+      "inward_shells": 0,
+      "uv_layers": 1,
+      "materials": 1,
+      "bbox_min": [
+        -0.8711820244789124,
+        -0.4611339867115021,
+        -0.8711820244789124
+      ],
+      "bbox_max": [
+        0.8711820244789124,
+        0.5276520252227783,
+        0.8711820244789124
+      ]
+    },
+    "roundtrip_triangles": 3820,
+    "roundtrip_bbox_error_studs": 0.0,
+    "embedded_texture": [
+      "NekoBucketHat_Fraise_Albedo.png 1024x1024"
+    ],
+    "fbx_bytes": 288428
+  },
+  "Matcha": {
+    "source": {
+      "triangles": 3820,
+      "vertices": 1928,
+      "faces": 2028,
+      "non_manifold_edges": 0,
+      "boundary_edges": 0,
+      "degenerate_faces": 0,
+      "ngons": 0,
+      "shells": 9,
+      "inward_shells": 0,
+      "uv_layers": 1,
+      "materials": 1,
+      "bbox_min": [
+        -0.8711820244789124,
+        -0.4611339867115021,
+        -0.8711820244789124
+      ],
+      "bbox_max": [
+        0.8711820244789124,
+        0.5276520252227783,
+        0.8711820244789124
+      ]
+    },
+    "roundtrip_triangles": 3820,
+    "roundtrip_bbox_error_studs": 0.0,
+    "embedded_texture": [
+      "NekoBucketHat_Matcha_Albedo.png 1024x1024"
+    ],
+    "fbx_bytes": 293580
+  },
+  "Minuit": {
+    "source": {
+      "triangles": 3820,
+      "vertices": 1928,
+      "faces": 2028,
+      "non_manifold_edges": 0,
+      "boundary_edges": 0,
+      "degenerate_faces": 0,
+      "ngons": 0,
+      "shells": 9,
+      "inward_shells": 0,
+      "uv_layers": 1,
+      "materials": 1,
+      "bbox_min": [
+        -0.8711820244789124,
+        -0.4611339867115021,
+        -0.8711820244789124
+      ],
+      "bbox_max": [
+        0.8711820244789124,
+        0.5276520252227783,
+        0.8711820244789124
+      ]
+    },
+    "roundtrip_triangles": 3820,
+    "roundtrip_bbox_error_studs": 0.0,
+    "embedded_texture": [
+      "NekoBucketHat_Minuit_Albedo.png 1024x1024"
+    ],
+    "fbx_bytes": 284188
+  },
+  "Nuage": {
+    "source": {
+      "triangles": 3820,
+      "vertices": 1928,
+      "faces": 2028,
+      "non_manifold_edges": 0,
+      "boundary_edges": 0,
+      "degenerate_faces": 0,
+      "ngons": 0,
+      "shells": 9,
+      "inward_shells": 0,
+      "uv_layers": 1,
+      "materials": 1,
+      "bbox_min": [
+        -0.8711820244789124,
+        -0.4611339867115021,
+        -0.8711820244789124
+      ],
+      "bbox_max": [
+        0.8711820244789124,
+        0.5276520252227783,
+        0.8711820244789124
+      ]
+    },
+    "roundtrip_triangles": 3820,
+    "roundtrip_bbox_error_studs": 0.0,
+    "embedded_texture": [
+      "NekoBucketHat_Nuage_Albedo.png 1024x1024"
+    ],
+    "fbx_bytes": 291052
+  },
+  "Choco": {
+    "source": {
+      "triangles": 3820,
+      "vertices": 1928,
+      "faces": 2028,
+      "non_manifold_edges": 0,
+      "boundary_edges": 0,
+      "degenerate_faces": 0,
+      "ngons": 0,
+      "shells": 9,
+      "inward_shells": 0,
+      "uv_layers": 1,
+      "materials": 1,
+      "bbox_min": [
+        -0.8711820244789124,
+        -0.4611339867115021,
+        -0.8711820244789124
+      ],
+      "bbox_max": [
+        0.8711820244789124,
+        0.5276520252227783,
+        0.8711820244789124
+      ]
+    },
+    "roundtrip_triangles": 3820,
+    "roundtrip_bbox_error_studs": 0.0,
+    "embedded_texture": [
+      "NekoBucketHat_Choco_Albedo.png 1024x1024"
+    ],
+    "fbx_bytes": 291644
+  }
+}

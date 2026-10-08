@@ -1,0 +1,48 @@
+{
+  "name": "NekoBucketHat",
+  "triangles": 3820,
+  "vertices": 1928,
+  "shells": [
+    "Crown",
+    "EarL",
+    "EarR",
+    "BowLoopL",
+    "BowLoopR",
+    "BowKnot",
+    "BowTailL",
+    "BowTailR",
+    "BowPearl"
+  ],
+  "bbox_min": [
+    -0.8712,
+    -0.4611,
+    -0.8712
+  ],
+  "bbox_max": [
+    0.8712,
+    0.5277,
+    0.8712
+  ],
+  "bbox_size": [
+    1.7424,
+    0.9888,
+    1.7424
+  ],
+  "bbox_centre": [
+    0.0,
+    0.0333,
+    0.0
+  ],
+  "hat_attachment_offset": [
+    -0.0,
+    -0.0333,
+    -0.0
+  ],
+  "colourways": [
+    "Fraise",
+    "Matcha",
+    "Minuit",
+    "Nuage",
+    "Choco"
+  ]
+}

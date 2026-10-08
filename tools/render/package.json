@@ -1,0 +1,12 @@
+{
+  "name": "neko-bucket-hat-render",
+  "private": true,
+  "type": "module",
+  "description": "Headless preview renders for the Neko Bucket Hat (three.js + Playwright).",
+  "dependencies": {
+    "three": "0.160.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}
